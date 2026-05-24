@@ -8,17 +8,18 @@ management:
       exposure:
         include: '*'
 ---
-spring.profiles: kubernetes
-spring.cloud.kubernetes.enabled: true
-spring.cloud.kubernetes.config.enabled: true
-spring.cloud.kubernetes.reload.enabled: true
-spring.cloud.kubernetes.reload.mode: event
-spring.cloud.kubernetes.reload.strategy: refresh
+spring:
+  config:
+    activate:
+      on-profile: kubernetes
+  cloud:
+    kubernetes:
+      enabled: true
+      config:
+        enabled: true
+      reload:
+        enabled: true
+        mode: event
+        strategy: refresh
 kubernetes.trust.certificates: true
 management.endpoint.restart.enabled: true
-
-
-
-
-
-

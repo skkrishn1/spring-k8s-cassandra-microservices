@@ -1,0 +1,184 @@
+# Ralph Progress Log
+Started: 2026-05-13
+Branch: ralph/epic-1-governed-api-contract
+
+---
+
+## Codebase Patterns
+
+- Use @WebMvcTest(Controller.class) + @MockBean for controller unit tests
+- Use @Valid annotation on @RequestBody parameters for request validation
+- GlobalExceptionHandler extends ResponseEntityExceptionHandler — so framework
+  MVC exceptions (405, 415, MethodArgumentNotValid) come out as Problem+JSON too
+- Use @RestController (not @Controller) on REST controllers — @Controller works
+  with ResponseEntity but breaks the moment any method returns a non-Entity type
+- Throw ResourceNotFoundException for 404 — DO NOT return
+  ResponseEntity.notFound().build(), that bypasses @ControllerAdvice entirely
+- Return DTOs (not entities) from all endpoints
+- Use factory methods: ProductResponseDto.fromEntity(Product)
+- TraceIdFilter extends OncePerRequestFilter, sets MDC, AND echoes X-Trace-Id
+  in the response header so clients can correlate
+- ProblemResponse class for RFC 7807 error responses; trace ID populated from
+  MDC with UUID fallback
+- SpringDoc OpenAPI 2.x annotations: @Operation, @ApiResponse, @Tag, @Schema
+- OpenAPI endpoints: /v3/api-docs and /swagger-ui.html
+- Spring Boot 2.4+ profile-document syntax: `spring.config.activate.on-profile:`
+  (the legacy `spring.profiles:` key is silently ignored)
+- Child POMs should NOT declare springdoc <version> — root POM
+  dependencyManagement supplies it via ${springdoc.version}
+
+---
+
+## [2026-05-13] - US-001: Spring Boot 2.7.x Upgrade
+- **What was implemented:**
+  - Root pom.xml: Spring Boot 2.7.14, Spring Cloud 2022.0.4
+  - microservice-spring-boot pom.xml: Replaced Springfox with SpringDoc 2.0.2
+  - microservice-spring-data pom.xml: Updated SpringDoc to 2.0.2
+  - gateway-service pom.xml: Removed Springfox, added SpringDoc 2.0.2
+  - SwaggerConfig.java: Replaced with comment explaining SpringDoc 2.x auto-configuration
+  - All Java versions updated to 11 for consistency
+- **Files changed:** 
+  - pom.xml (root), microservice-spring-boot/pom.xml, microservice-spring-data/pom.xml, gateway-service/pom.xml
+  - microservice-spring-boot/src/main/java/com/datastax/examples/swagger/SwaggerConfig.java
+- **Learnings:**
+  - SpringDoc 2.x provides automatic configuration without manual SwaggerConfig
+  - OpenAPI spec is at /v3/api-docs, Swagger UI at /swagger-ui.html
+
+---
+
+## [2026-05-13] - US-002: DTO Boundary
+- **What was implemented:**
+  - ProductRequestDto: Fields for name, id, description, price with validation annotations
+  - ProductResponseDto: Factory method fromEntity(Product) for conversion
+  - ProductController: Updated all GET/POST endpoints to use DTOs
+  - ProductControllerTest: Rewritten to test DTO binding and response shape
+- **Files changed:**
+  - microservice-spring-boot/src/main/java/com/datastax/examples/product/ProductRequestDto.java (created)
+  - microservice-spring-boot/src/main/java/com/datastax/examples/product/ProductResponseDto.java (created)
+  - microservice-spring-boot/src/main/java/com/datastax/examples/product/ProductController.java (updated)
+  - microservice-spring-boot/src/test/java/com/datastax/examples/product/ProductControllerTest.java (rewritten)
+- **Learnings:**
+  - DTOs protect internal entity structure from API exposure
+  - fromEntity() factory pattern is cleaner than manual mapping
+
+---
+
+## [2026-05-13] - US-003: SpringDoc OpenAPI 3.1 Spec
+- **What was implemented:**
+  - ProductController: Added @Tag, @Operation, @ApiResponse, @ApiResponses annotations
+  - application.yml: Added springdoc configuration for /v3/api-docs and /swagger-ui.html paths
+  - All endpoints documented with operation summaries, descriptions, and response codes
+- **Files changed:**
+  - microservice-spring-boot/src/main/java/com/datastax/examples/product/ProductController.java (updated with annotations)
+  - microservice-spring-boot/src/main/resources/application.yml (added springdoc config)
+- **Learnings:**
+  - SpringDoc auto-generates OpenAPI 3.1 spec from annotations
+  - /v3/api-docs is JSON endpoint, /swagger-ui.html is UI
+  - @Schema annotation needed for DTO response types
+
+---
+
+## [2026-05-13] - US-004: Global Problem+JSON Error Handler
+- **What was implemented:**
+  - ProblemResponse: RFC 7807 compliant error response DTO
+  - GlobalExceptionHandler: @ControllerAdvice with handlers for 400, 404, 500 errors
+  - TraceIdFilter: Extracts X-Trace-Id header or generates UUID, stores in MDC
+  - ResourceNotFoundException: Custom exception for 404 scenarios
+  - GlobalExceptionHandlerTest: Comprehensive error scenario testing
+- **Files changed:**
+  - microservice-spring-boot/src/main/java/com/datastax/examples/product/ProblemResponse.java (created)
+  - microservice-spring-boot/src/main/java/com/datastax/examples/product/GlobalExceptionHandler.java (created)
+  - microservice-spring-boot/src/main/java/com/datastax/examples/product/TraceIdFilter.java (created)
+  - microservice-spring-boot/src/main/java/com/datastax/examples/product/ResourceNotFoundException.java (created)
+  - microservice-spring-boot/src/test/java/com/datastax/examples/product/GlobalExceptionHandlerTest.java (created)
+- **Learnings:**
+  - MDC is useful for adding context to all error responses
+  - TraceIdFilter must use OncePerRequestFilter to avoid duplicate filtering
+  - Problem+JSON responses need consistent format across all error types
+
+---
+
+## [2026-05-13] - US-005: Bean Validation at DTO Boundary
+- **What was implemented:**
+  - ProductRequestDto: @NotBlank, @NotNull, @Positive annotations on all required fields
+  - ProductController: @Valid annotation on addProduct @RequestBody parameter
+  - ProductControllerTest: Added validation failure test cases
+  - GlobalExceptionHandler: MethodArgumentNotValidException handler returns structured error detail
+  - spring-boot-starter-validation dependency added
+- **Files changed:**
+  - microservice-spring-boot/src/main/java/com/datastax/examples/product/ProductRequestDto.java (updated with validation)
+  - microservice-spring-boot/src/main/java/com/datastax/examples/product/ProductController.java (added @Valid)
+  - microservice-spring-boot/src/main/java/com/datastax/examples/product/GlobalExceptionHandler.java (added validation handler)
+  - microservice-spring-boot/pom.xml (added spring-boot-starter-validation)
+  - microservice-spring-boot/src/test/java/com/datastax/examples/product/ProductControllerTest.java (added validation tests)
+- **Learnings:**
+  - @Valid must be used with @RequestBody to trigger validation
+  - Validation errors are caught by GlobalExceptionHandler as MethodArgumentNotValidException
+  - Field-level error messages should be included in Problem+JSON detail field
+
+---
+
+## [2026-05-24] - Epic 1 Review Pass: Bug fixes & quality improvements
+- **Context:** Pre-commit code review uncovered functional bugs and quality gaps in
+  the as-coded Epic 1 work. Fixed before first commit so the branch lands clean.
+- **Blockers fixed:**
+  - ProductController.findProductsByNameAndId now throws ResourceNotFoundException
+    instead of returning ResponseEntity.notFound().build(). Without this, the
+    GlobalExceptionHandler was dead code for the most common 404 path and the
+    response wasn't Problem+JSON. (US-004 AC violation.)
+  - Deleted untracked ProductDaoTest and ProductServiceTest. They had multiple
+    bugs (Mockito strict-stubbing violations, mixing raw values with any()
+    matchers in verify(), un-wired Row iterators causing NPEs). Not in Epic 1
+    ACs — proper DAO/Service coverage belongs to a follow-up epic.
+- **Significant improvements:**
+  - GlobalExceptionHandler now extends ResponseEntityExceptionHandler so that
+    Spring MVC framework exceptions (405, 415, etc.) also come out as Problem+JSON,
+    not Spring's default empty body. Generic Exception handler narrowed to
+    RuntimeException to stop swallowing framework exceptions.
+  - Switched @Controller to @RestController on ProductController. Works today
+    via HttpEntityMethodProcessor but is brittle for any future non-ResponseEntity
+    method.
+  - TraceIdFilter now echoes X-Trace-Id in the response header so clients can
+    correlate without parsing the body.
+  - Validation error detail uses Collectors.joining("; ") — no trailing "; ".
+  - Removed redundant @ResponseStatus on ResponseEntity-returning handlers
+    (status comes from the ResponseEntity, annotation was ignored).
+  - GlobalExceptionHandlerTest.shouldReturnNotFoundAsValidProblemResponse was
+    rewritten — it used two different UUIDs for stub vs request, so the stub
+    never matched. Replaced with a test that exercises ResourceNotFoundException
+    end-to-end and verifies the full Problem+JSON shape. Added a new test that
+    asserts the X-Trace-Id response header echo.
+- **Real bug found via review (NOT in original ACs):**
+  - application.yml in all 3 modules used `spring.profiles: docker` (the Spring
+    Boot pre-2.4 syntax). After the 2.7 upgrade this key is SILENTLY IGNORED,
+    meaning the docker/kubernetes profile sections were being applied
+    unconditionally — overriding base config in ALL environments. Migrated to
+    `spring.config.activate.on-profile` with nested YAML form.
+- **Minor cleanups:**
+  - Deleted SwaggerConfig.java (comment-only stub).
+  - microservice-spring-data/pom.xml: dropped hardcoded `<version>2.0.2</version>`
+    on springdoc deps — they're managed by the root POM's dependencyManagement.
+  - ProductController: imported java.util.List / ArrayList instead of FQN.
+- **Files changed in this pass:**
+  - microservice-spring-boot/src/main/java/com/datastax/examples/product/ProductController.java
+  - microservice-spring-boot/src/main/java/com/datastax/examples/product/GlobalExceptionHandler.java
+  - microservice-spring-boot/src/main/java/com/datastax/examples/product/TraceIdFilter.java
+  - microservice-spring-boot/src/test/java/com/datastax/examples/product/GlobalExceptionHandlerTest.java
+  - microservice-spring-boot/src/main/resources/application.yml
+  - microservice-spring-data/src/main/resources/application.yml
+  - microservice-spring-data/pom.xml
+  - gateway-service/src/main/resources/application.yml
+  - microservice-spring-boot/src/main/java/com/datastax/examples/swagger/SwaggerConfig.java (deleted)
+  - microservice-spring-boot/src/test/java/com/datastax/examples/product/ProductDaoTest.java (deleted)
+  - microservice-spring-boot/src/test/java/com/datastax/examples/product/ProductServiceTest.java (deleted)
+- **Learnings (added to Codebase Patterns above):**
+  - For 404 → Problem+JSON, the controller MUST throw a custom exception; returning
+    ResponseEntity.notFound() bypasses @ControllerAdvice entirely.
+  - Spring Boot 2.4+ requires `spring.config.activate.on-profile`. The legacy
+    `spring.profiles` key is silently dropped, not just deprecated.
+  - GlobalExceptionHandler should extend ResponseEntityExceptionHandler so
+    framework MVC exceptions get the same Problem+JSON treatment as custom ones.
+  - TraceIdFilter should write the X-Trace-Id response header, not just MDC.
+
+---
+
