@@ -1,0 +1,11 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm config *)"
+    ]
+  },
+  "enableAllProjectMcpServers": true,
+  "env": {
+    "JIRA_API_TOKEN": "ATATT3xFfGF0X2YxBx7gNZV3NxfCbvSP20iqkvRx3JmWJ3i-UOeKSTZbb7JOjbiR4rf0NszJcdfoa-cWpyzKRPCrgEydboAeFVfVyihzi52z8t96Q6XsKjHinPLHArW5s241oSTkDf017YCdfONSXp2v6s_yNTGdHlyRUJQncosWXq22iTbs3Nw=04944832"
+  }
+}

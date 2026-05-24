@@ -1,0 +1,397 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Code Review Report — spring-k8s-cassandra-microservices</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: #f4f6f9; color: #1a1a2e; line-height: 1.6; }
+    header { background: linear-gradient(135deg, #1a1a2e 0%, #16213e 60%, #0f3460 100%); color: #fff; padding: 2.5rem 2rem 2rem; }
+    header h1 { font-size: 1.6rem; font-weight: 700; margin-bottom: 0.3rem; }
+    header .meta { font-size: 0.85rem; color: #a0b4cc; }
+    header .meta span { margin-right: 1.5rem; }
+    .badge { display: inline-block; border-radius: 4px; padding: 2px 8px; font-size: 0.75rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; }
+    .badge-critical { background: #fdecea; color: #c0392b; }
+    .badge-high     { background: #fef3e2; color: #e67e22; }
+    .badge-medium   { background: #fefce8; color: #b7791f; }
+    .badge-low      { background: #e8f5e9; color: #2e7d32; }
+    .badge-fixed    { background: #e3f2fd; color: #1565c0; }
+    .badge-deferred { background: #f3e5f5; color: #6a1b9a; }
+    .badge-dismissed{ background: #eceff1; color: #546e7a; }
+    .container { max-width: 960px; margin: 2rem auto; padding: 0 1rem; }
+    .summary-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1rem; margin-bottom: 2rem; }
+    .summary-card { background: #fff; border-radius: 8px; padding: 1.2rem 1rem; text-align: center; box-shadow: 0 1px 4px rgba(0,0,0,0.08); }
+    .summary-card .number { font-size: 2rem; font-weight: 800; }
+    .summary-card .label  { font-size: 0.8rem; color: #6b7280; text-transform: uppercase; letter-spacing: 0.05em; margin-top: 0.2rem; }
+    .summary-card.patched  .number { color: #1565c0; }
+    .summary-card.deferred .number { color: #6a1b9a; }
+    .summary-card.dismissed .number { color: #546e7a; }
+    .summary-card.total    .number { color: #1a1a2e; }
+    section { margin-bottom: 2rem; }
+    section h2 { font-size: 1rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; color: #6b7280; margin-bottom: 0.8rem; padding-bottom: 0.4rem; border-bottom: 2px solid #e5e7eb; }
+    .finding { background: #fff; border-radius: 8px; box-shadow: 0 1px 4px rgba(0,0,0,0.07); margin-bottom: 1rem; overflow: hidden; }
+    .finding-header { display: flex; align-items: flex-start; gap: 0.8rem; padding: 0.9rem 1.2rem; border-left: 4px solid #ccc; }
+    .finding-header.critical { border-color: #c0392b; }
+    .finding-header.high     { border-color: #e67e22; }
+    .finding-header.medium   { border-color: #f0c040; }
+    .finding-header.low      { border-color: #2e7d32; }
+    .finding-header.deferred { border-color: #9c27b0; }
+    .finding-id { font-size: 0.75rem; font-weight: 700; color: #9ca3af; min-width: 2.2rem; padding-top: 2px; }
+    .finding-body { flex: 1; }
+    .finding-title { font-weight: 600; font-size: 0.97rem; margin-bottom: 0.3rem; }
+    .finding-detail { font-size: 0.87rem; color: #4b5563; margin-bottom: 0.4rem; }
+    .finding-meta { display: flex; gap: 0.5rem; flex-wrap: wrap; align-items: center; }
+    .finding-location { font-family: "SFMono-Regular", Consolas, monospace; font-size: 0.78rem; background: #f1f5f9; color: #334155; padding: 1px 6px; border-radius: 3px; }
+    .finding-source { font-size: 0.75rem; color: #9ca3af; }
+    .fix-block { background: #f0f9ff; border-top: 1px solid #bae6fd; padding: 0.7rem 1.2rem 0.7rem 3.4rem; font-size: 0.85rem; color: #0c4a6e; }
+    .fix-block strong { font-weight: 600; }
+    code { font-family: "SFMono-Regular", Consolas, monospace; font-size: 0.82rem; background: #f1f5f9; padding: 1px 4px; border-radius: 3px; }
+    footer { text-align: center; font-size: 0.8rem; color: #9ca3af; padding: 2rem 0 3rem; }
+  </style>
+</head>
+<body>
+
+<header>
+  <h1>Code Review Report</h1>
+  <div class="meta">
+    <span>&#128193; spring-k8s-cassandra-microservices</span>
+    <span>&#128197; 2026-04-19</span>
+    <span>&#128336; Reviewer: BMAD Code Review (Blind Hunter + Edge Case Hunter)</span>
+    <span>&#128268; Scope: Uncommitted changes &mdash; <code style="background:rgba(255,255,255,0.15);color:#fff">git diff HEAD</code></span>
+  </div>
+</header>
+
+<div class="container">
+
+  <!-- Summary -->
+  <div class="summary-grid" style="margin-top:1.5rem;">
+    <div class="summary-card total">
+      <div class="number">14</div>
+      <div class="label">Total Findings</div>
+    </div>
+    <div class="summary-card patched">
+      <div class="number">6</div>
+      <div class="label">Patched &#10003;</div>
+    </div>
+    <div class="summary-card deferred">
+      <div class="number">7</div>
+      <div class="label">Deferred</div>
+    </div>
+    <div class="summary-card dismissed">
+      <div class="number">1</div>
+      <div class="label">Dismissed</div>
+    </div>
+  </div>
+
+  <!-- Diff Stats -->
+  <section>
+    <h2>Diff Stats</h2>
+    <div class="finding" style="border-left:none;">
+      <div style="padding:0.9rem 1.2rem; font-size:0.88rem; color:#4b5563;">
+        <table style="width:100%;border-collapse:collapse;">
+          <thead><tr style="font-size:0.78rem;text-transform:uppercase;color:#9ca3af;letter-spacing:0.05em;">
+            <th style="text-align:left;padding:4px 8px;">File</th>
+            <th style="text-align:right;padding:4px 8px;">+Added</th>
+            <th style="text-align:right;padding:4px 8px;">-Removed</th>
+          </tr></thead>
+          <tbody>
+            <tr style="border-top:1px solid #f3f4f6;"><td style="padding:4px 8px;font-family:monospace;font-size:0.82rem;">.github/skills/cassandra-schema-design/SKILL.md</td><td style="text-align:right;color:#16a34a;padding:4px 8px;">+158</td><td style="text-align:right;color:#dc2626;padding:4px 8px;">0</td></tr>
+            <tr style="border-top:1px solid #f3f4f6;"><td style="padding:4px 8px;font-family:monospace;font-size:0.82rem;">.github/skills/kubernetes-deployment/SKILL.md</td><td style="text-align:right;color:#16a34a;padding:4px 8px;">+208</td><td style="text-align:right;color:#dc2626;padding:4px 8px;">0</td></tr>
+            <tr style="border-top:1px solid #f3f4f6;"><td style="padding:4px 8px;font-family:monospace;font-size:0.82rem;">.github/skills/spring-boot-code-review/SKILL.md</td><td style="text-align:right;color:#16a34a;padding:4px 8px;">+70</td><td style="text-align:right;color:#dc2626;padding:4px 8px;">0</td></tr>
+            <tr style="border-top:1px solid #f3f4f6;"><td style="padding:4px 8px;font-family:monospace;font-size:0.82rem;">.github/skills/spring-boot-integration-tests/SKILL.md</td><td style="text-align:right;color:#16a34a;padding:4px 8px;">+114</td><td style="text-align:right;color:#dc2626;padding:4px 8px;">0</td></tr>
+            <tr style="border-top:1px solid #f3f4f6;"><td style="padding:4px 8px;font-family:monospace;font-size:0.82rem;">.github/skills/spring-boot-unit-tests/SKILL.md</td><td style="text-align:right;color:#16a34a;padding:4px 8px;">+82</td><td style="text-align:right;color:#dc2626;padding:4px 8px;">0</td></tr>
+            <tr style="border-top:1px solid #f3f4f6;"><td style="padding:4px 8px;font-family:monospace;font-size:0.82rem;">.gitignore</td><td style="text-align:right;color:#16a34a;padding:4px 8px;">+2</td><td style="text-align:right;color:#dc2626;padding:4px 8px;">0</td></tr>
+            <tr style="border-top:1px solid #f3f4f6;"><td style="padding:4px 8px;font-family:monospace;font-size:0.82rem;">CLAUDE.md</td><td style="text-align:right;color:#16a34a;padding:4px 8px;">+193</td><td style="text-align:right;color:#dc2626;padding:4px 8px;">0</td></tr>
+            <tr style="border-top:1px solid #f3f4f6;"><td style="padding:4px 8px;font-family:monospace;font-size:0.82rem;">microservice-spring-boot/…/ProductControllerTest.java</td><td style="text-align:right;color:#16a34a;padding:4px 8px;">+319</td><td style="text-align:right;color:#dc2626;padding:4px 8px;">0</td></tr>
+            <tr style="border-top:1px solid #f3f4f6;"><td style="padding:4px 8px;font-family:monospace;font-size:0.82rem;">pom.xml</td><td style="text-align:right;color:#16a34a;padding:4px 8px;">+6</td><td style="text-align:right;color:#dc2626;padding:4px 8px;">-3</td></tr>
+            <tr style="border-top:2px solid #e5e7eb;font-weight:700;"><td style="padding:6px 8px;">Total (9 files)</td><td style="text-align:right;color:#16a34a;padding:6px 8px;">+1,149</td><td style="text-align:right;color:#dc2626;padding:6px 8px;">-3</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <!-- Patched Findings -->
+  <section>
+    <h2>&#9989; Patched (6)</h2>
+
+    <div class="finding">
+      <div class="finding-header critical">
+        <div class="finding-id">P1</div>
+        <div class="finding-body">
+          <div class="finding-title">Null product returns HTTP 200 instead of 404 — controller and test both wrong</div>
+          <div class="finding-detail">
+            <code>ProductController.findProductsByNameAndId()</code> called <code>ResponseEntity.ok(null)</code> when the service returned null for a missing product. The corresponding test <code>shouldReturnNotFoundWhenProductNotFoundByNameAndId</code> asserted <code>isOk()</code>, masking the bug. Separately, <code>ProductDao.findByNameAndId()</code> called <code>row.getString()</code> on the result of <code>rs.one()</code> without a null check, causing a <code>NullPointerException</code> when no row was found.
+          </div>
+          <div class="finding-meta">
+            <span class="badge badge-critical">Critical</span>
+            <span class="badge badge-fixed">Fixed</span>
+            <span class="badge" style="background:#f1f5f9;color:#475569;">blind + edge</span>
+            <span class="finding-location">ProductController.java:26–29</span>
+            <span class="finding-location">ProductDao.java:82–86</span>
+            <span class="finding-location">ProductControllerTest.java:126–136</span>
+          </div>
+        </div>
+      </div>
+      <div class="fix-block">
+        <strong>Fix:</strong> Added null check in <code>ProductDao.findByNameAndId()</code> returning <code>null</code> when <code>rs.one()</code> returns null. Updated <code>ProductController</code> to return <code>ResponseEntity.notFound().build()</code> when product is null. Updated test assertion to <code>isNotFound()</code>.
+      </div>
+    </div>
+
+    <div class="finding">
+      <div class="finding-header high">
+        <div class="finding-id">P2</div>
+        <div class="finding-body">
+          <div class="finding-title">Test named "shouldReturnBadRequest" asserts 200 OK — misleading name, no validation guard</div>
+          <div class="finding-detail">
+            The test sent <code>{"invalidField":"value"}</code> (unknown fields, all Product properties deserialize to null), yet asserted <code>isOk()</code> while the method name claimed bad-request behavior. This validated the absence of input validation as if it were correct behavior.
+          </div>
+          <div class="finding-meta">
+            <span class="badge badge-high">High</span>
+            <span class="badge badge-fixed">Fixed</span>
+            <span class="badge" style="background:#f1f5f9;color:#475569;">blind + edge</span>
+            <span class="finding-location">ProductControllerTest.java:191–202</span>
+          </div>
+        </div>
+      </div>
+      <div class="fix-block">
+        <strong>Fix:</strong> Renamed test to <code>shouldAcceptRequestWithUnknownFieldsIgnoredByJackson()</code>. Added clarifying comment noting that proper input validation (<code>@Valid</code> + <code>@NotNull</code>/<code>@NotBlank</code>) is deferred (D1).
+      </div>
+    </div>
+
+    <div class="finding">
+      <div class="finding-header high">
+        <div class="finding-id">P3</div>
+        <div class="finding-body">
+          <div class="finding-title">Logback 1.4.14 incompatible with Spring Boot 2.3.0 (SLF4J version conflict)</div>
+          <div class="finding-detail">
+            Logback 1.4.x requires SLF4J 2.x. Spring Boot 2.3.0 depends on SLF4J 1.7.x. Overriding <code>&lt;logback.version&gt;</code> to <code>1.4.14</code> in <code>pom.xml</code> would cause <code>NoSuchMethodError</code> or <code>IncompatibleClassChangeError</code> at runtime.
+          </div>
+          <div class="finding-meta">
+            <span class="badge badge-high">High</span>
+            <span class="badge badge-fixed">Fixed</span>
+            <span class="badge" style="background:#f1f5f9;color:#475569;">blind</span>
+            <span class="finding-location">pom.xml:38</span>
+          </div>
+        </div>
+      </div>
+      <div class="fix-block">
+        <strong>Fix:</strong> Reverted <code>&lt;logback.version&gt;</code> from <code>1.4.14</code> back to <code>1.2.3</code> (Spring Boot 2.3.0 managed version).
+      </div>
+    </div>
+
+    <div class="finding">
+      <div class="finding-header medium">
+        <div class="finding-id">P4</div>
+        <div class="finding-body">
+          <div class="finding-title">Stray XML artifacts corrupt 3 SKILL.md files</div>
+          <div class="finding-detail">
+            Three skill files contained raw XML fragments leaked from tooling templates — <code>&lt;/content&gt;</code>, <code>&lt;/invoke&gt;</code>, and <code>&lt;parameter name="filePath"&gt;...&lt;/parameter&gt;</code> — appended after the last valid Markdown line, breaking file parsers and rendering.
+          </div>
+          <div class="finding-meta">
+            <span class="badge badge-medium">Medium</span>
+            <span class="badge badge-fixed">Fixed</span>
+            <span class="badge" style="background:#f1f5f9;color:#475569;">blind</span>
+            <span class="finding-location">kubernetes-deployment/SKILL.md:207–208</span>
+            <span class="finding-location">spring-boot-code-review/SKILL.md:69–70</span>
+            <span class="finding-location">spring-boot-unit-tests/SKILL.md:81–82</span>
+          </div>
+        </div>
+      </div>
+      <div class="fix-block">
+        <strong>Fix:</strong> Removed all stray XML tags from the end of all three SKILL.md files.
+      </div>
+    </div>
+
+    <div class="finding">
+      <div class="finding-header low">
+        <div class="finding-id">P5</div>
+        <div class="finding-body">
+          <div class="finding-title">BigDecimal price compared as <code>double</code> in JSON path — fragile assertion</div>
+          <div class="finding-detail">
+            <code>jsonPath("$.price", is(999.99))</code> uses a <code>double</code> literal matcher. <code>BigDecimal.valueOf(999.99)</code> may serialize with varying precision and <code>999.99</code> is not exactly representable as a IEEE 754 double, making this comparison fragile across Jackson versions or serialization settings.
+          </div>
+          <div class="finding-meta">
+            <span class="badge badge-low">Low</span>
+            <span class="badge badge-fixed">Fixed</span>
+            <span class="badge" style="background:#f1f5f9;color:#475569;">blind</span>
+            <span class="finding-location">ProductControllerTest.java:120, 147</span>
+          </div>
+        </div>
+      </div>
+      <div class="fix-block">
+        <strong>Fix:</strong> Changed to <code>closeTo(999.99, 0.001)</code> (Hamcrest), already covered by existing <code>import static org.hamcrest.Matchers.*</code>.
+      </div>
+    </div>
+
+  </section>
+
+  <!-- Deferred Findings -->
+  <section>
+    <h2>&#8987; Deferred (7) — Pre-existing, not introduced by this diff</h2>
+
+    <div class="finding">
+      <div class="finding-header deferred">
+        <div class="finding-id">D1</div>
+        <div class="finding-body">
+          <div class="finding-title">No input validation on <code>Product</code> fields (null names, negative prices)</div>
+          <div class="finding-detail">The <code>Product</code> class has no <code>@NotNull</code>, <code>@NotBlank</code>, or <code>@Positive</code> annotations. The controller uses no <code>@Valid</code> on the request body. Invalid data (null name, negative price) passes through to Cassandra.</div>
+          <div class="finding-meta">
+            <span class="badge badge-high">High</span>
+            <span class="badge badge-deferred">Deferred</span>
+            <span class="badge" style="background:#f1f5f9;color:#475569;">edge</span>
+            <span class="finding-location">Product.java</span>
+            <span class="finding-location">ProductController.java:32</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="finding">
+      <div class="finding-header deferred">
+        <div class="finding-id">D2</div>
+        <div class="finding-body">
+          <div class="finding-title">No <code>@ControllerAdvice</code> — Cassandra failures return raw stack traces</div>
+          <div class="finding-detail">If <code>CqlSession.execute()</code> throws (network timeout, auth failure, schema mismatch), no exception handler catches it. Spring returns a 500 with a raw stack trace exposed to the client.</div>
+          <div class="finding-meta">
+            <span class="badge badge-high">High</span>
+            <span class="badge badge-deferred">Deferred</span>
+            <span class="badge" style="background:#f1f5f9;color:#475569;">edge</span>
+            <span class="finding-location">ProductController.java (no @ControllerAdvice)</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="finding">
+      <div class="finding-header deferred">
+        <div class="finding-id">D3</div>
+        <div class="finding-body">
+          <div class="finding-title">Default Cassandra credentials documented in CLAUDE.md</div>
+          <div class="finding-detail">CLAUDE.md documents <code>cassandra/cassandra</code> as default credentials. Acceptable in a demo project but encourages copy-paste into real deployments without rotation.</div>
+          <div class="finding-meta">
+            <span class="badge badge-medium">Medium</span>
+            <span class="badge badge-deferred">Deferred</span>
+            <span class="badge" style="background:#f1f5f9;color:#475569;">blind</span>
+            <span class="finding-location">CLAUDE.md</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="finding">
+      <div class="finding-header deferred">
+        <div class="finding-id">D4</div>
+        <div class="finding-body">
+          <div class="finding-title">Invalid UUID path variable returns no custom error response</div>
+          <div class="finding-detail">Passing a non-UUID string to <code>/api/products/search/{name}/{id}</code> causes Spring to return a generic 400 with no structured error body. No test covers this path.</div>
+          <div class="finding-meta">
+            <span class="badge badge-medium">Medium</span>
+            <span class="badge badge-deferred">Deferred</span>
+            <span class="badge" style="background:#f1f5f9;color:#475569;">edge</span>
+            <span class="finding-location">ProductController.java:26</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="finding">
+      <div class="finding-header deferred">
+        <div class="finding-id">D5</div>
+        <div class="finding-body">
+          <div class="finding-title">Empty or blank product name accepted without validation</div>
+          <div class="finding-detail"><code>removeProductByName()</code> and <code>findProductsByName()</code> accept <code>""</code> or whitespace-only names via path variable, which execute CQL against a meaningless partition key.</div>
+          <div class="finding-meta">
+            <span class="badge badge-medium">Medium</span>
+            <span class="badge badge-deferred">Deferred</span>
+            <span class="badge" style="background:#f1f5f9;color:#475569;">edge</span>
+            <span class="finding-location">ProductController.java:38, 21</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="finding">
+      <div class="finding-header deferred">
+        <div class="finding-id">D6</div>
+        <div class="finding-body">
+          <div class="finding-title"><code>commons-fileupload</code> 1.3.3 → 1.6 may break API callers</div>
+          <div class="finding-detail">The 1.5.x release introduced breaking API changes. If any code directly uses <code>commons-fileupload</code> APIs (e.g., <code>DiskFileItem</code>), this jump could cause <code>NoSuchMethodError</code>. Needs runtime verification.</div>
+          <div class="finding-meta">
+            <span class="badge badge-low">Low</span>
+            <span class="badge badge-deferred">Deferred</span>
+            <span class="badge" style="background:#f1f5f9;color:#475569;">blind</span>
+            <span class="finding-location">pom.xml:37</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="finding">
+      <div class="finding-header deferred">
+        <div class="finding-id">D7</div>
+        <div class="finding-body">
+          <div class="finding-title">No test coverage for duplicate key / concurrent insert scenarios</div>
+          <div class="finding-detail"><code>ProductDao.addProduct()</code> performs an unconditional INSERT with no conflict handling. Duplicate <code>name + id</code> inserts overwrite silently in Cassandra. No test verifies or documents this behaviour.</div>
+          <div class="finding-meta">
+            <span class="badge badge-low">Low</span>
+            <span class="badge badge-deferred">Deferred</span>
+            <span class="badge" style="background:#f1f5f9;color:#475569;">edge</span>
+            <span class="finding-location">ProductDao.java:88</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </section>
+
+  <!-- Dismissed -->
+  <section>
+    <h2>&#10060; Dismissed (1)</h2>
+    <div class="finding">
+      <div class="finding-header" style="border-left-color:#b0bec5;">
+        <div class="finding-id" style="color:#b0bec5;">R1</div>
+        <div class="finding-body">
+          <div class="finding-title" style="color:#78909c;">"Test verifies productService.add called for invalid JSON" — merged into P2</div>
+          <div class="finding-detail" style="color:#90a4ae;">Duplicate of P2 (misleading test assertion). Absorbed into the renamed test finding during deduplication.</div>
+          <div class="finding-meta">
+            <span class="badge badge-dismissed">Dismissed</span>
+            <span class="badge" style="background:#f1f5f9;color:#475569;">blind</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Review Layers -->
+  <section>
+    <h2>&#128270; Review Layers</h2>
+    <div class="finding" style="border-left:none;">
+      <div style="padding:1rem 1.2rem;font-size:0.87rem;color:#4b5563;">
+        <table style="width:100%;border-collapse:collapse;">
+          <thead><tr style="font-size:0.78rem;text-transform:uppercase;color:#9ca3af;letter-spacing:0.05em;">
+            <th style="text-align:left;padding:4px 8px;">Layer</th>
+            <th style="text-align:left;padding:4px 8px;">Role</th>
+            <th style="text-align:left;padding:4px 8px;">Context</th>
+            <th style="text-align:right;padding:4px 8px;">Findings</th>
+            <th style="text-align:left;padding:4px 8px;">Status</th>
+          </tr></thead>
+          <tbody>
+            <tr style="border-top:1px solid #f3f4f6;"><td style="padding:6px 8px;font-weight:600;">Blind Hunter</td><td style="padding:6px 8px;">Adversarial — no project context</td><td style="padding:6px 8px;">Diff only</td><td style="text-align:right;padding:6px 8px;">9</td><td style="padding:6px 8px;color:#16a34a;">&#10003; Completed</td></tr>
+            <tr style="border-top:1px solid #f3f4f6;"><td style="padding:6px 8px;font-weight:600;">Edge Case Hunter</td><td style="padding:6px 8px;">Boundary conditions &amp; failure paths</td><td style="padding:6px 8px;">Diff + project read access</td><td style="text-align:right;padding:6px 8px;">13</td><td style="padding:6px 8px;color:#16a34a;">&#10003; Completed</td></tr>
+            <tr style="border-top:1px solid #f3f4f6;"><td style="padding:6px 8px;font-weight:600;">Acceptance Auditor</td><td style="padding:6px 8px;">Spec compliance</td><td style="padding:6px 8px;">N/A</td><td style="text-align:right;padding:6px 8px;">—</td><td style="padding:6px 8px;color:#9ca3af;">Skipped (no spec file)</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+</div>
+
+<footer>
+  Generated by BMAD Code Review &mdash; spring-k8s-cassandra-microservices &mdash; 2026-04-19
+</footer>
+
+</body>
+</html>

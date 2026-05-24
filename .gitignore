@@ -19,3 +19,5 @@ dist
 # misc
 .DS_Store
 .factorypath
+# Added by code-review-graph
+.code-review-graph/
