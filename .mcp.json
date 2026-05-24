@@ -1,0 +1,24 @@
+{
+  "mcpServers": {
+    "jira": {
+      "type": "stdio",
+      "command": "npx",
+      "args": [
+        "-y",
+        "mcp-jira-cloud"
+      ],
+      "env": {
+        "JIRA_BASE_URL": "https://skkrishn.atlassian.net",
+        "JIRA_EMAIL": "sureshkrishslm@gmail.com",
+        "JIRA_API_TOKEN": "${JIRA_API_TOKEN}"
+      }
+    },
+    "code-review-graph": {
+      "command": "code-review-graph",
+      "args": [
+        "serve"
+      ],
+      "type": "stdio"
+    }
+  }
+}

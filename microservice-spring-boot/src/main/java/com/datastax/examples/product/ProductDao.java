@@ -82,6 +82,9 @@ public class ProductDao {
     public Product findByNameAndId(String name, UUID id){
         ResultSet rs = session.execute(selectProductByNameAndId.bind(name, id));
         Row row = rs.one();
+        if (row == null) {
+            return null;
+        }
         return new Product(name, id, row.getString("description"), row.getBigDecimal("price"), row.getInstant("last_updated"));
     }
 

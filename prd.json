@@ -1,0 +1,90 @@
+{
+  "project": "spring-k8s-cassandra-microservices",
+  "branchName": "ralph/epic-1-governed-api-contract",
+  "description": "Epic 1 — Governed API Contract & DTO Boundary: versioned endpoints, SpringDoc, DTO layer, Problem+JSON",
+  "userStories": [
+    {
+      "id": "US-001",
+      "title": "Spring Boot 2.7.x Upgrade",
+      "description": "As a developer, I want the project upgraded from Spring Boot 2.3.0 to 2.7.x so that SpringDoc OpenAPI 2.x, Spring Security 5.8, and Testcontainers integration are available.",
+      "acceptanceCriteria": [
+        "Root pom.xml declares spring-boot.version=2.7.x and spring-cloud.version=2021.x",
+        "All three modules build: microservice-spring-boot, microservice-spring-data, gateway-service",
+        "Springfox removed from microservice-spring-boot POM, replaced with SpringDoc OpenAPI 2.x",
+        "mvn package -DskipTests passes on all modules",
+        "Typecheck passes"
+      ],
+      "priority": 1,
+      "passes": true,
+      "notes": "Upgraded to Spring Boot 2.7.14, Spring Cloud 2021.0.9 (Jubilee - the line compatible with Boot 2.7; 2022.0.x requires Boot 3.x), Spring Cloud BOM imported for transitive version management, springfox replaced with SpringDoc 1.7.0 (springdoc-openapi-ui artifact; 2.x requires Boot 3.x), spring-cloud-starter-kubernetes-config renamed to spring-cloud-starter-kubernetes-client-config, build verified end-to-end with mvn package -DskipTests across all 3 modules"
+    },
+    {
+      "id": "US-002",
+      "title": "DTO Boundary — ProductRequestDto and ProductResponseDto",
+      "description": "As a developer, I want a strict DTO layer on the Products service so that internal Product entity is never exposed in API request binding or responses.",
+      "acceptanceCriteria": [
+        "ProductRequestDto created with fields: name, id (UUID), description, price — no entity fields exposed",
+        "ProductResponseDto created with static fromEntity(Product) factory method",
+        "ProductController uses ProductRequestDto for @RequestBody (not Product entity)",
+        "ProductController returns ProductResponseDto (not Product entity)",
+        "Unit test: ProductControllerTest validates DTO binding and response shape",
+        "mvn test -pl microservice-spring-boot passes",
+        "Typecheck passes"
+      ],
+      "priority": 2,
+      "passes": true,
+      "notes": "Created ProductRequestDto and ProductResponseDto, updated ProductController to use DTOs, updated all tests"
+    },
+    {
+      "id": "US-003",
+      "title": "SpringDoc OpenAPI 3.1 spec — Products service",
+      "description": "As an API consumer, I want a machine-readable OpenAPI 3.1 spec at /v3/api-docs on the Products service so I can generate clients and explore the API.",
+      "acceptanceCriteria": [
+        "springdoc-openapi-ui added to microservice-spring-boot pom.xml",
+        "Springfox dependency fully removed",
+        "GET /v3/api-docs returns valid OpenAPI 3.1 JSON",
+        "GET /swagger-ui.html renders Swagger UI with all product endpoints",
+        "All endpoints annotated with @Operation and @ApiResponse",
+        "mvn test -pl microservice-spring-boot passes",
+        "Typecheck passes"
+      ],
+      "priority": 3,
+      "passes": true,
+      "notes": "Added SpringDoc OpenAPI annotations to all endpoints, configured application.yml with OpenAPI settings, replaced SwaggerConfig with comments"
+    },
+    {
+      "id": "US-004",
+      "title": "Global Problem+JSON error handler — Products service",
+      "description": "As an API consumer, I want all error responses in RFC 7807 Problem+JSON format so I can handle errors consistently.",
+      "acceptanceCriteria": [
+        "ProblemResponse class created with fields: type, title, status, detail, traceId",
+        "GlobalExceptionHandler @ControllerAdvice created handling: ResourceNotFoundException (404), MethodArgumentNotValidException (400), generic Exception (500)",
+        "All handlers return ProblemResponse as ResponseEntity body",
+        "TraceIdFilter sets MDC key traceId from X-Trace-Id header or generated UUID",
+        "traceId included in every ProblemResponse",
+        "Unit test: GlobalExceptionHandlerTest covers all handled exception types",
+        "mvn test -pl microservice-spring-boot passes",
+        "Typecheck passes"
+      ],
+      "priority": 4,
+      "passes": true,
+      "notes": "Created ProblemResponse, GlobalExceptionHandler, TraceIdFilter, ResourceNotFoundException, created comprehensive tests"
+    },
+    {
+      "id": "US-005",
+      "title": "Bean validation at DTO boundary — Products service",
+      "description": "As the system, I want invalid API requests rejected at the controller boundary with a descriptive 400 error so internal code never processes invalid data.",
+      "acceptanceCriteria": [
+        "ProductRequestDto annotated: @NotBlank on name, @NotNull on id, @NotBlank on description, @NotNull @Positive on price",
+        "ProductController POST /api/products/add annotated with @Valid",
+        "Invalid request returns 400 ProblemResponse with field-level error detail",
+        "Unit test: ProductControllerTest validates 400 response for missing name, null id, null price",
+        "mvn test -pl microservice-spring-boot passes",
+        "Typecheck passes"
+      ],
+      "priority": 5,
+      "passes": true,
+      "notes": "Added validation annotations to ProductRequestDto, added @Valid to controller, created comprehensive validation tests"
+    }
+  ]
+}

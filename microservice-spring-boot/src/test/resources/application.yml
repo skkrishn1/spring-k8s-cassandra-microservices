@@ -1,0 +1,15 @@
+# Test-only configuration. Disables Spring Cloud Kubernetes integration so tests
+# can boot without a live K8s API (spring-cloud-starter-kubernetes-client-config
+# tries to resolve the cluster namespace on startup, which fails in unit tests).
+spring:
+  main:
+    cloud-platform: none
+  cloud:
+    kubernetes:
+      enabled: false
+      config:
+        enabled: false
+      discovery:
+        enabled: false
+    bootstrap:
+      enabled: false

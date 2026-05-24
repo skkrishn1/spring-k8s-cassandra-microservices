@@ -7,17 +7,34 @@ management:
   server:
     port: 8084
 
+springdoc:
+  api-docs:
+    path: /v3/api-docs
+  swagger-ui:
+    path: /swagger-ui.html
+
 ---
-spring.profiles: docker
+spring:
+  config:
+    activate:
+      on-profile: docker
 cassandra.contact-points: host.docker.internal
 cassandra.keyspace: betterbotz
 cassandra.local-datacenter: dc1
 cassandra.port: 9042
 ---
-spring.profiles: kubernetes
-spring.cloud.kubernetes.enabled: true
-spring.cloud.kubernetes.config.enabled: true
-spring.cloud.kubernetes.config.sources.namespace: spring-boot-service
-spring.cloud.kubernetes.reload.enabled: true
-spring.cloud.kubernetes.reload.mode: event
+spring:
+  config:
+    activate:
+      on-profile: kubernetes
+  cloud:
+    kubernetes:
+      enabled: true
+      config:
+        enabled: true
+        sources:
+          namespace: spring-boot-service
+      reload:
+        enabled: true
+        mode: event
 kubernetes.trust.certificates: true
