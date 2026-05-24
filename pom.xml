@@ -26,18 +26,20 @@
 		<!-- Spring -->
 		<spring.version>5.3.27</spring.version>
 		<spring-boot.version>2.7.14</spring-boot.version>
-		<spring-cloud.version>2022.0.4</spring-cloud.version>
-		<spring-data.version>3.1.14</spring-data.version>
-		<spring-data-rest.version>3.7.14</spring-data-rest.version>
-		<spring-cloud-kubernetes.version>2.1.8</spring-cloud-kubernetes.version>
+		<!-- Spring Cloud 2021.0.x (Jubilee) is the line compatible with Boot 2.7.x.
+		     2022.0.x (Kilburn) requires Spring Boot 3.x. -->
+		<spring-cloud.version>2021.0.9</spring-cloud.version>
+		<!-- spring-cloud-kubernetes-client-config version is provided by the
+		     Spring Cloud BOM import below; no explicit override needed. -->
 
 		<cassandra-java-driver.version>4.8.0</cassandra-java-driver.version>
 
 		<!-- Third Parties -->
-		<common-fileupload>1.6</common-fileupload>
-		<logback.version>1.2.3</logback.version>
-		<jackson.version>2.15.4</jackson.version>
-		<springdoc.version>2.0.2</springdoc.version>
+		<common-fileupload>1.5</common-fileupload>
+		<logback.version>1.2.12</logback.version>
+		<!-- SpringDoc 1.7.0 is the last 1.x release; required for Boot 2.7.x.
+		     SpringDoc 2.x requires Boot 3.x and uses springdoc-openapi-starter-* artifacts. -->
+		<springdoc.version>1.7.0</springdoc.version>
 
 	</properties>
 
@@ -57,6 +59,17 @@
 	<dependencyManagement>
 		<dependencies>
 
+			<!-- Spring Cloud BOM - imports all spring-cloud-* starter versions
+			     including spring-cloud-starter-gateway and the renamed
+			     spring-cloud-starter-kubernetes-client-config. -->
+			<dependency>
+				<groupId>org.springframework.cloud</groupId>
+				<artifactId>spring-cloud-dependencies</artifactId>
+				<version>${spring-cloud.version}</version>
+				<type>pom</type>
+				<scope>import</scope>
+			</dependency>
+
 			<!-- Spring -->
 			<dependency>
 				<groupId>org.springframework</groupId>
@@ -67,16 +80,6 @@
 				<groupId>org.springframework.boot</groupId>
 				<artifactId>spring-boot-starter-thymeleaf</artifactId>
 				<version>${spring-boot.version}</version>
-			</dependency>
-			<dependency>
-				<groupId>org.springframework.cloud</groupId>
-				<artifactId>spring-cloud-starter-kubernetes-config</artifactId>
-				<version>${spring-cloud-kubernetes.version}</version>
-			</dependency>
-			<dependency>
-				<groupId>org.springframework.cloud</groupId>
-				<artifactId>spring-cloud-starter-gateway</artifactId>
-				<version>${spring-cloud.version}</version>
 			</dependency>
 			<dependency>
 				<groupId>org.springframework.boot</groupId>
@@ -103,11 +106,8 @@
 				<artifactId>spring-boot-devtools</artifactId>
 				<version>${spring-boot.version}</version>
 			</dependency>
-			<dependency>
-				<groupId>org.springframework.data</groupId>
-				<artifactId>spring-data-rest-core</artifactId>
-				<version>${spring-data-rest.version}</version>
-			</dependency>
+			<!-- spring-data-rest-core version is managed by Spring Boot 2.7's BOM
+			     via spring-boot-starter-data-rest; no override needed. -->
 
 			<!-- Cassandra Driver -->
 			<dependency>
@@ -142,21 +142,18 @@
 				<artifactId>logback-classic</artifactId>
 				<version>${logback.version}</version>
 			</dependency>
-			<dependency>
-				<groupId>com.fasterxml.jackson.core</groupId>
-				<artifactId>jackson-core</artifactId>
-				<version>${jackson.version}</version>
-			</dependency>
+			<!-- jackson-core version managed by Spring Boot 2.7 BOM (currently 2.13.x);
+			     no override needed and the deleted property was unresolved. -->
 
-			<!-- API Documentation -->
+			<!-- API Documentation - SpringDoc 1.7.0 for Boot 2.7.x -->
 			<dependency>
 				<groupId>org.springdoc</groupId>
-				<artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
+				<artifactId>springdoc-openapi-ui</artifactId>
 				<version>${springdoc.version}</version>
 			</dependency>
 			<dependency>
 				<groupId>org.springdoc</groupId>
-				<artifactId>springdoc-openapi-starter-data-rest</artifactId>
+				<artifactId>springdoc-openapi-data-rest</artifactId>
 				<version>${springdoc.version}</version>
 			</dependency>
 

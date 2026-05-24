@@ -16,7 +16,7 @@
       ],
       "priority": 1,
       "passes": true,
-      "notes": "Upgraded to Spring Boot 2.7.14, Spring Cloud 2022.0.4, replaced Springfox with SpringDoc 2.0.2"
+      "notes": "Upgraded to Spring Boot 2.7.14, Spring Cloud 2021.0.9 (Jubilee - the line compatible with Boot 2.7; 2022.0.x requires Boot 3.x), Spring Cloud BOM imported for transitive version management, springfox replaced with SpringDoc 1.7.0 (springdoc-openapi-ui artifact; 2.x requires Boot 3.x), spring-cloud-starter-kubernetes-config renamed to spring-cloud-starter-kubernetes-client-config, build verified end-to-end with mvn package -DskipTests across all 3 modules"
     },
     {
       "id": "US-002",

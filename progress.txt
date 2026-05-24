@@ -26,6 +26,21 @@ Branch: ralph/epic-1-governed-api-contract
   (the legacy `spring.profiles:` key is silently ignored)
 - Child POMs should NOT declare springdoc <version> — root POM
   dependencyManagement supplies it via ${springdoc.version}
+- Compatibility matrix (LOCKED for Boot 2.7):
+    Spring Boot 2.7.x → Spring Cloud 2021.0.x → SpringDoc 1.7.x
+    Spring Boot 3.x   → Spring Cloud 2022.0.x → SpringDoc 2.x
+- Spring Cloud BOM (`spring-cloud-dependencies`) MUST be imported in root
+  dependencyManagement; do NOT hand-version individual spring-cloud-* starters
+- spring-cloud-starter-kubernetes-config (Hoxton-era artifact) was renamed to
+  spring-cloud-starter-kubernetes-client-config in Spring Cloud 2021+
+- Reactive apps (Spring Cloud Gateway, WebFlux) must use the
+  `springdoc-openapi-webflux-ui` artifact, NOT the webmvc variant
+- For tests, K8s client config integration must be disabled via surefire
+  `<systemPropertyVariables>` (spring.cloud.kubernetes.enabled=false +
+  spring.main.cloud-platform=NONE) — test application.yml runs too late in
+  the ConfigData resolution lifecycle to suppress it
+- Maven Wrapper is committed to the repo; build with `./mvnw` (JAVA_HOME must
+  be set; first run downloads Maven 3.9.6 to ~/.m2 automatically)
 
 ---
 
@@ -115,6 +130,74 @@ Branch: ralph/epic-1-governed-api-contract
   - @Valid must be used with @RequestBody to trigger validation
   - Validation errors are caught by GlobalExceptionHandler as MethodArgumentNotValidException
   - Field-level error messages should be included in Problem+JSON detail field
+
+---
+
+## [2026-05-24] - Epic 1 Build Verification: dependency matrix fixes
+- **Context:** First actual `mvn package` run exposed that the as-coded Boot 2.7
+  upgrade had an internally-inconsistent dependency matrix. The build was never
+  verified before the initial Epic 1 commit; this pass got it green.
+- **Real bugs found by Maven (not visible from reading the code):**
+  - `spring-cloud.version` was `2022.0.4` (Kilburn) — that line REQUIRES Spring
+    Boot 3.x. For Boot 2.7 you need `2021.0.x` (Jubilee). Set to `2021.0.9`.
+  - SpringDoc `2.0.2` with `springdoc-openapi-starter-webmvc-ui` artifacts —
+    that's the Boot 3.x line. For Boot 2.7 use SpringDoc `1.7.0` with
+    `springdoc-openapi-ui` / `springdoc-openapi-data-rest` artifact names.
+  - `spring-cloud-starter-kubernetes-config:2.1.8` does NOT exist. The artifact
+    was RENAMED to `spring-cloud-starter-kubernetes-client-config` in Spring
+    Cloud 2021+. Updated all 3 child POMs to the new artifact name.
+  - `spring-cloud-starter-gateway` had `${spring-cloud.version}` (`2022.0.4`)
+    as its version — that's a BOM coordinate, not an artifact version. The
+    Gateway artifact has its own versioning that the BOM resolves.
+  - `<jackson.version>` was referenced in dependencyManagement but the property
+    was removed during cleanup — left an unresolved `${jackson.version}` token
+    that broke resolution.
+  - `commons-fileupload:1.6` doesn't exist (latest is 1.5).
+  - Gateway service was wired with `springdoc-openapi-starter-webmvc-ui` — but
+    Spring Cloud Gateway is reactive (Netty). webmvc would pull in Tomcat and
+    fail. Switched to `springdoc-openapi-webflux-ui`.
+- **Structural fix:**
+  - Imported `spring-cloud-dependencies` BOM in root dependencyManagement so
+    all Spring Cloud starters resolve through it, instead of being hand-wired
+    with mismatched versions.
+- **Test-only issues found:**
+  - `microservice-spring-boot/pom.xml` was missing `spring-boot-starter-test`
+    entirely — JUnit 5, MockMvc, @MockBean, AssertJ all unresolved at test
+    compile time. Added (test scope).
+  - Test imports referenced `org.springframework.boot.test.mock.MockBean` —
+    correct package is `org.springframework.boot.test.mock.mockito.MockBean`.
+    Fixed in both ProductControllerTest and GlobalExceptionHandlerTest.
+  - `import static org.hamcrest.Matchers.*` and
+    `import static org.mockito.Mockito.*` both export `any` — calls to bare
+    `any()` were ambiguous. Added explicit `import static
+    org.mockito.ArgumentMatchers.any` to disambiguate.
+  - `spring-cloud-starter-kubernetes-client-config` aggressively bootstraps a
+    K8s API client on startup and fails with `NamespaceResolutionFailedException`
+    in any unit test context. Added surefire systemPropertyVariables to set
+    `spring.cloud.kubernetes.enabled=false` etc. so it loads BEFORE Spring
+    config processing (a test-resources `application.yml` is too late in the
+    lifecycle for ConfigData resolvers).
+- **Tooling:**
+  - Added Maven Wrapper (`mvnw`, `mvnw.cmd`, `.mvn/wrapper/`) since the project
+    had no wrapper and Maven was not installed system-wide on the dev machine.
+    First run downloads Maven 3.9.6 to ~/.m2 automatically.
+- **Verification:**
+  - `./mvnw clean package -DskipTests` — all 3 modules build, JARs produced.
+  - `./mvnw test -pl microservice-spring-boot` — 22 tests, 0 failures, 0 errors.
+- **Learnings (added to Codebase Patterns):**
+  - Spring Boot ↔ Spring Cloud version compatibility is strict:
+    Boot 2.6/2.7 → Spring Cloud 2021.0.x; Boot 3.0+ → Spring Cloud 2022.0.x+.
+  - Spring Boot ↔ SpringDoc compatibility is strict:
+    Boot 2.7 → SpringDoc 1.7.x (`springdoc-openapi-ui`);
+    Boot 3.x → SpringDoc 2.x (`springdoc-openapi-starter-webmvc-ui`).
+  - Always import the Spring Cloud BOM via dependencyManagement so individual
+    starters don't need (often-wrong) explicit versions.
+  - `spring-cloud-starter-kubernetes-config` was renamed to
+    `spring-cloud-starter-kubernetes-client-config` in Spring Cloud 2021+.
+  - For reactive apps (Spring Cloud Gateway, WebFlux), use the
+    `springdoc-openapi-webflux-ui` artifact, NOT `*-ui` (which is MVC/Tomcat).
+  - K8s client config bootstrap must be disabled via surefire systemProperties,
+    not test application.yml — it runs too early in the lifecycle.
 
 ---
 
