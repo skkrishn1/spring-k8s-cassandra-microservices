@@ -15,7 +15,8 @@
 | **Diagram Step** | **This Project** | **File** |
 |---|---|---|
 | You write a PRD | `planning-artifacts/prd.md` | Already exists |
-| Convert to `prd.json` | `prd.json` — stories with `passes: false/true` | `prd.json` |
+| Break PRD into epics + stories | `planning-artifacts/epics.md` | `bmad-create-epics-and-stories` skill |
+| **Convert epic to `prd.json`** | **`prd.json` — stories with `passes: false/true`** | **`bmad-create-ralph-prd-json` skill (Claude Code) or `.github/prompts/bmad-create-ralph-prd-json.prompt.md` (Copilot)** |
 | Run `ralph.sh` | `#file:.github/prompts/ralph-loop.prompt.md` in Copilot | `ralph-loop.prompt.md` |
 | AI picks a story (`passes: false`) | Ralph reads lowest `priority` where `passes: false` | Built into prompt |
 | Implements it — writes code, runs tests | Copilot edits files, runs `mvn test` | Built into prompt |
@@ -35,6 +36,7 @@ With Claude Code, this becomes fully autonomous.
 
 | **Agent / Skill** | **Primary Role** | **Critical Inputs** | **Critical Outputs** | **Prompt File** |
 |---|---|---|---|---|
+| **BMAD→Ralph Converter** | Translate ONE epic from `epics.md` into the locked `prd.json` schema Ralph consumes | `planning-artifacts/epics.md`; epic number argument; root build file | `prd.json` at repo root (5–10 stories, all `passes: false`, dependency-ordered, build+typecheck ACs appended) | `bmad-create-ralph-prd-json` skill (Claude Code) **or** `.github/prompts/bmad-create-ralph-prd-json.prompt.md` (Copilot) |
 | **Story Parser** | Parse BMAD epics into structured, dev-ready story files | `planning-artifacts/epics.md`; `architecture.md`; `project-context.md` | `planning-artifacts/stories/<n>-<n>-<slug>.md` with ACs, tasks, Dev Notes | `ralph-story-prep.prompt.md` |
 | **Task Generator** | Emit ordered task/subtask list with acceptance criteria mapped to test expectations | Parsed story file; architecture refs; existing source patterns | Tasks/Subtasks section in story file; test run command | `ralph-story-prep.prompt.md` |
 | **Planner Orchestrator** | Order all stories across epics, compute dependencies, emit sprint tracking | `epics.md`; existing story files in `planning-artifacts/stories/` | `planning-artifacts/sprint-status.yaml` with ordered status entries | `bmad-planner-orchestrator.prompt.md` |
@@ -51,11 +53,13 @@ With Claude Code, this becomes fully autonomous.
 
 | **Artifact** | **Location** | **Produced By** | **Consumed By** |
 |---|---|---|---|
-| Epics file | `planning-artifacts/epics.md` | BMAD planning phase | Story Parser, Planner Orchestrator |
+| Epics file | `planning-artifacts/epics.md` | BMAD planning phase | Story Parser, Planner Orchestrator, **BMAD→Ralph Converter** |
 | Architecture doc | `planning-artifacts/architecture.md` | BMAD planning phase | Story Parser (Dev Notes) |
 | Project context | `planning-artifacts/project-context.md` | BMAD planning phase | All agents |
 | Story file | `planning-artifacts/stories/<n>-<n>-<slug>.md` | Story Parser | Codegen Worker, Test Agent, Governance Agent |
 | Sprint status | `planning-artifacts/sprint-status.yaml` | Planner Orchestrator | Ralph Loop (picks next story) |
+| **Ralph PRD JSON** | **`prd.json` (repo root)** | **BMAD→Ralph Converter** | **Ralph Loop (reads + toggles `passes`)** |
+| **Archived PRD JSON** | **`archive/<YYYY-MM-DD>-<branch-slug>/prd.json`** | **BMAD→Ralph Converter (when `branchName` changes between epics)** | **None — historical record** |
 | Dev Agent Record | Section inside story file | Trace Recorder | Governance Agent, Approval Agent |
 | File List | Section inside story file | Trace Recorder | Governance Agent (diff scope) |
 | Review findings | Section inside story file | Governance Agent | Self-Correction Agent (fix cycle) |
@@ -68,19 +72,27 @@ With Claude Code, this becomes fully autonomous.
 ┌─────────────────────────────────────────────────────────┐
 │                    PHASE 0 — PLAN                        │
 │                                                         │
+│  prd.md ──► bmad-create-epics-and-stories ──► epics.md  │
 │  epics.md ──► Planner Orchestrator ──► sprint-status    │
 └────────────────────────┬────────────────────────────────┘
                          │
 ┌────────────────────────▼────────────────────────────────┐
 │                    PHASE 1 — PREP                        │
 │                                                         │
-│  epics.md ──► Story Parser + Task Generator             │
-│                    │                                    │
-│                    ▼                                    │
-│            story file (ready-for-dev)                   │
-│            ├── Acceptance Criteria                      │
-│            ├── Tasks/Subtasks                           │
-│            └── Dev Notes (file paths, patterns)         │
+│  Rich story files (for humans + Governance review):     │
+│    epics.md ──► Story Parser + Task Generator           │
+│                      │                                  │
+│                      ▼                                  │
+│              planning-artifacts/stories/<slug>.md       │
+│              ├── Acceptance Criteria                    │
+│              ├── Tasks/Subtasks                         │
+│              └── Dev Notes (file paths, patterns)       │
+│                                                         │
+│  Ralph contract file (machine-readable, per epic):      │
+│    epics.md ──► bmad-create-ralph-prd-json ──► prd.json │
+│                 (locked schema; passes:false; build+    │
+│                  typecheck ACs appended; dependency-    │
+│                  ordered priorities)                    │
 └────────────────────────┬────────────────────────────────┘
                          │
 ┌────────────────────────▼────────────────────────────────┐
